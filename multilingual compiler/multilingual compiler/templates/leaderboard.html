@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Real-Time Leaderboard – CodeVision AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 1050px; margin: 0 auto;">
+    <!-- Leaderboard Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2><i class="fa-solid fa-trophy" style="color: var(--accent-amber);"></i> Real-Time Student Leaderboard</h2>
+            <p style="color: var(--text-secondary);">Top performing students ranked by code correctness, execution efficiency, and overall performance.</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+            <button id="refresh-leaderboard-btn" class="btn btn-secondary btn-sm" onclick="loadLeaderboard()">
+                <i class="fa-solid fa-rotate"></i> Live Refresh
+            </button>
+            <a href="{{ url_for('editor_page') }}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-code"></i> Open IDE Compiler
+            </a>
+        </div>
+    </div>
+
+    <!-- Personal Standing Banner (For Logged-in User) -->
+    <div id="user-standing-card" class="glass-card" style="display: none; margin-bottom: 2rem; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(30, 41, 59, 0.7) 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                <div id="standing-rank-badge" style="font-size: 2.2rem; font-weight: 800; font-family: var(--font-mono); color: var(--accent-amber); min-width: 60px; text-align: center;">
+                    #1
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span id="standing-username">Your Profile</span>
+                        <span class="badge badge-easy" style="font-size: 0.75rem;">Active Student</span>
+                    </h3>
+                    <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.85rem;" id="standing-subtitle">
+                        Your latest benchmark performance & overall rank standing.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Metric Cards -->
+            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                <div style="text-align: center; padding: 0.5rem 1rem; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Current / Latest</div>
+                    <div id="standing-latest-score" style="font-size: 1.4rem; font-weight: 700; color: var(--accent-cyan); font-family: var(--font-mono);">--</div>
+                </div>
+
+                <div style="text-align: center; padding: 0.5rem 1rem; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Highest Score</div>
+                    <div id="standing-top-score" style="font-size: 1.4rem; font-weight: 700; color: var(--accent-emerald); font-family: var(--font-mono);">--</div>
+                </div>
+
+                <div style="text-align: center; padding: 0.5rem 1rem; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Submissions</div>
+                    <div id="standing-sub-count" style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono);">--</div>
+                </div>
+
+                <div style="text-align: center; padding: 0.5rem 1rem; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Average Score</div>
+                    <div id="standing-avg-score" style="font-size: 1.4rem; font-weight: 700; color: var(--accent-purple); font-family: var(--font-mono);">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Table Card -->
+    <div class="glass-card">
+        <div style="overflow-x: auto;">
+            <table class="tokens-table" style="font-family: var(--font-sans);">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Rank</th>
+                        <th>Student</th>
+                        <th>Current Score</th>
+                        <th>Top Score</th>
+                        <th>Avg Score</th>
+                        <th>Submissions</th>
+                        <th>Last Active</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading rankings...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function loadLeaderboard() {
+    const refreshBtn = document.getElementById('refresh-leaderboard-btn');
+    if (refreshBtn) {
+        refreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Refreshing...';
+    }
+
+    try {
+        const response = await fetch('/api/leaderboard');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            const rankings = data.rankings || [];
+            const standing = data.current_user_standing;
+            const currentUserId = data.current_user_id;
+
+            // Render Personal Standing Card
+            const standingCard = document.getElementById('user-standing-card');
+            if (standing && standingCard) {
+                standingCard.style.display = 'block';
+                document.getElementById('standing-username').textContent = standing.username;
+                
+                const rankDisplay = typeof standing.rank === 'number' 
+                    ? (standing.rank === 1 ? '🥇 #1' : standing.rank === 2 ? '🥈 #2' : standing.rank === 3 ? '🥉 #3' : `#${standing.rank}`)
+                    : standing.rank;
+                document.getElementById('standing-rank-badge').textContent = rankDisplay;
+                
+                document.getElementById('standing-latest-score').textContent = `${standing.latest_score} / 100`;
+                document.getElementById('standing-top-score').textContent = `${standing.highest_score} / 100`;
+                document.getElementById('standing-sub-count').textContent = standing.submissions_count;
+                document.getElementById('standing-avg-score').textContent = `${standing.avg_score} / 100`;
+            }
+
+            // Render Rankings Table
+            const body = document.getElementById('leaderboard-body');
+            if (rankings.length === 0) {
+                body.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No student rankings recorded yet. Submit your code from the IDE Compiler to earn the #1 spot!</td></tr>`;
+                return;
+            }
+
+            let html = "";
+            rankings.forEach((r, idx) => {
+                const rankNum = idx + 1;
+                const rankBadge = rankNum === 1 ? '🥇 1st' : rankNum === 2 ? '🥈 2nd' : rankNum === 3 ? '🥉 3rd' : `#${rankNum}`;
+                const isYou = r.is_current_user;
+                
+                const rowStyle = isYou 
+                    ? 'background: rgba(99, 102, 241, 0.15); border-left: 3px solid var(--primary); font-weight: 600;' 
+                    : '';
+
+                const youBadge = isYou 
+                    ? ' <span class="badge badge-easy" style="font-size: 0.7rem; margin-left: 0.35rem;">You</span>' 
+                    : '';
+
+                const latestScoreBadge = `<span class="badge ${r.latest_score >= 80 ? 'badge-easy' : (r.latest_score >= 50 ? 'badge-medium' : 'badge-hard')}">${r.latest_score} / 100</span>`;
+                const topScoreBadge = `<span class="badge ${r.highest_score >= 80 ? 'badge-easy' : (r.highest_score >= 50 ? 'badge-medium' : 'badge-hard')}">${r.highest_score} / 100</span>`;
+
+                html += `
+                    <tr style="${rowStyle}">
+                        <td><strong style="color: ${rankNum <= 3 ? 'var(--accent-amber)' : 'inherit'}; font-size: 1rem;">${rankBadge}</strong></td>
+                        <td><strong>${escapeHtml(r.username)}</strong>${youBadge}</td>
+                        <td>${latestScoreBadge}</td>
+                        <td>${topScoreBadge}</td>
+                        <td>${r.avg_score}</td>
+                        <td>${r.submissions_count}</td>
+                        <td><small style="color: var(--text-muted);">${r.last_active || 'N/A'}</small></td>
+                    </tr>
+                `;
+            });
+            body.innerHTML = html;
+        } else {
+            showToast("Failed to load rankings.", "danger");
+        }
+    } catch (err) {
+        showToast("Error loading leaderboard.", "danger");
+    } finally {
+        if (refreshBtn) {
+            refreshBtn.innerHTML = '<i class="fa-solid fa-rotate"></i> Live Refresh';
+        }
+    }
+}
+
+function escapeHtml(str) {
+    if (typeof str !== 'string') return String(str);
+    return str.replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', loadLeaderboard);
+</script>
+{% endblock %}
+

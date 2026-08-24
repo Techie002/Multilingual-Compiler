@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}CodeVision AI – Multi-Language Compiler & Evaluation Platform{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 3rem 1rem;">
+    <span class="badge badge-medium" style="margin-bottom: 1rem;"><i class="fa-solid fa-bolt"></i> Next-Gen AI Compiler & Automated Evaluation</span>
+    <h1 style="font-size: 3rem; line-height: 1.2; margin-bottom: 1.5rem;">
+        Empowering Next-Gen Coding & <br><span style="color: var(--primary);">Compiler Concepts Evaluation</span>
+    </h1>
+    <p style="color: var(--text-secondary); max-width: 700px; margin: 0 auto 2rem auto; font-size: 1.1rem;">
+        An all-in-one platform featuring multi-language isolated sandbox execution (Python, C, C++, Java, JS), real-time AST & Lexical analysis, AI code generation & diff comparison, automated grading with hidden test cases, plagiarism detection, and faculty analytics.
+    </p>
+
+    <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 3.5rem;">
+        <a href="{{ url_for('editor_page') }}" class="btn btn-primary" style="padding: 0.8rem 1.8rem; font-size: 1rem;">
+            <i class="fa-solid fa-code"></i> Launch IDE Compiler
+        </a>
+        <a href="{{ url_for('register_page') }}" class="btn btn-secondary" style="padding: 0.8rem 1.8rem; font-size: 1rem;">
+            Get Started Free
+        </a>
+    </div>
+
+    <!-- Feature Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; text-align: left;">
+        <div class="glass-card">
+            <div style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem;"><i class="fa-solid fa-terminal"></i></div>
+            <h3>Multi-Language Sandbox</h3>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                Execute Python, C, C++, Java, and JavaScript inside isolated sandbox runtimes with execution time tracking and memory telemetry.
+            </p>
+        </div>
+
+        <div class="glass-card">
+            <div style="font-size: 2rem; color: var(--accent-cyan); margin-bottom: 1rem;"><i class="fa-solid fa-microchip"></i></div>
+            <h3>Compiler Concepts Engine</h3>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                Visualize Lexical tokens, Parse trees, Abstract Syntax Trees (AST), Syntax error checks, and Semantic rules in real-time.
+            </p>
+        </div>
+
+        <div class="glass-card">
+            <div style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 1rem;"><i class="fa-solid fa-robot"></i></div>
+            <h3>AI Generator & Comparison</h3>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                Generate optimal code solutions with time/space complexity analysis and compare Student VS AI code logic line-by-line.
+            </p>
+        </div>
+
+        <div class="glass-card">
+            <div style="font-size: 2rem; color: var(--accent-amber); margin-bottom: 1rem;"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <h3>Plagiarism & Stylometry</h3>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                Multi-pass token N-gram, AST structural tree matching, Cosine TF-IDF vector similarity, and coding style fingerprinting.
+            </p>
+        </div>
+
+        <div class="glass-card">
+            <div style="font-size: 2rem; color: var(--accent-emerald); margin-bottom: 1rem;"><i class="fa-solid fa-chart-line"></i></div>
+            <h3>Automated Evaluation</h3>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                Automated assignment testing with hidden test cases, correctness scoring, execution time penalties, and score reports.
+            </p>
+        </div>
+
+        <div class="glass-card">
+            <div style="font-size: 2rem; color: var(--accent-rose); margin-bottom: 1rem;"><i class="fa-solid fa-file-pdf"></i></div>
+            <h3>Downloadable Reports & Certs</h3>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                Export detailed PDF evaluation reports, CSV gradebooks for faculty, and earn verifiable Certificates of Accomplishment.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

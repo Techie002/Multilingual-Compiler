@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard & Coding Question Bank – CodeVision AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h2><i class="fa-solid fa-graduation-cap"></i> Student Dashboard & Question Bank</h2>
+        <p style="color: var(--text-secondary);">Browse multi-language coding challenges, review test case specifications, learn common pitfalls, and solve in the IDE.</p>
+    </div>
+    <a href="{{ url_for('editor_page') }}" class="btn btn-primary">
+        <i class="fa-solid fa-code"></i> Open Sandbox IDE
+    </a>
+</div>
+
+<!-- Question Library Section -->
+<div class="glass-card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i>
+                Multi-Language Coding Challenges
+            </h3>
+            <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.85rem;" id="questions-counter">
+                Showing {{ assignments|length }} problems across multiple programming languages.
+            </p>
+        </div>
+
+        <!-- Search Bar -->
+        <div style="min-width: 250px;">
+            <input type="text" id="question-search-input" class="form-control" placeholder="Search problems by title, keyword, or language..." oninput="filterQuestions()" style="font-size: 0.85rem; padding: 0.45rem 0.85rem;">
+        </div>
+    </div>
+
+    <!-- Filter Bar: Languages & Difficulties -->
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; background: rgba(15, 23, 42, 0.5); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        <!-- Language Filter Chips -->
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-right: 0.25rem;">Language:</span>
+            <button class="filter-chip active" data-filter="lang" data-val="all" onclick="setFilter('lang', 'all', this)">All</button>
+            <button class="filter-chip" data-filter="lang" data-val="python" onclick="setFilter('lang', 'python', this)">Python</button>
+            <button class="filter-chip" data-filter="lang" data-val="c" onclick="setFilter('lang', 'c', this)">C</button>
+            <button class="filter-chip" data-filter="lang" data-val="cpp" onclick="setFilter('lang', 'cpp', this)">C++</button>
+            <button class="filter-chip" data-filter="lang" data-val="java" onclick="setFilter('lang', 'java', this)">Java</button>
+            <button class="filter-chip" data-filter="lang" data-val="javascript" onclick="setFilter('lang', 'javascript', this)">JavaScript</button>
+            <button class="filter-chip" data-filter="lang" data-val="sql" onclick="setFilter('lang', 'sql', this)">SQL</button>
+            <button class="filter-chip" data-filter="lang" data-val="go" onclick="setFilter('lang', 'go', this)">Go</button>
+            <button class="filter-chip" data-filter="lang" data-val="rust" onclick="setFilter('lang', 'rust', this)">Rust</button>
+            <button class="filter-chip" data-filter="lang" data-val="php" onclick="setFilter('lang', 'php', this)">PHP</button>
+            <button class="filter-chip" data-filter="lang" data-val="bash" onclick="setFilter('lang', 'bash', this)">Bash</button>
+            <button class="filter-chip" data-filter="lang" data-val="rag" onclick="setFilter('lang', 'rag', this)">RAG</button>
+        </div>
+
+        <!-- Difficulty Filter Chips -->
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-right: 0.25rem;">Difficulty:</span>
+            <button class="filter-chip active" data-filter="diff" data-val="all" onclick="setFilter('diff', 'all', this)">All</button>
+            <button class="filter-chip" data-filter="diff" data-val="Easy" onclick="setFilter('diff', 'Easy', this)">Easy</button>
+            <button class="filter-chip" data-filter="diff" data-val="Medium" onclick="setFilter('diff', 'Medium', this)">Medium</button>
+            <button class="filter-chip" data-filter="diff" data-val="Hard" onclick="setFilter('diff', 'Hard', this)">Hard</button>
+            <button class="filter-chip" data-filter="diff" data-val="Expert" onclick="setFilter('diff', 'Expert', this)">Expert</button>
+        </div>
+    </div>
+
+    <!-- Questions Grid Container -->
+    <div id="questions-container" style="display: flex; flex-direction: column; gap: 1.25rem;">
+        {% for a in assignments %}
+            <div class="question-card glass-card" data-lang="{{ a.language|lower }}" data-diff="{{ a.difficulty }}" data-title="{{ a.title|lower }}" style="padding: 1.25rem; background: rgba(30, 41, 59, 0.45); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+                            <h4 style="margin: 0; font-size: 1.15rem; color: #f8fafc;">{{ a.title }}</h4>
+                            <span class="badge badge-{{ a.difficulty|lower }}">{{ a.difficulty }}</span>
+                            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-weight: 700;">{{ a.language|upper }}</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0.35rem 0 0.5rem 0; line-height: 1.5;">
+                            {{ a.description }}
+                        </p>
+                        {% if a.constraints %}
+                            <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-ruler-combined"></i> <strong>Constraints:</strong> {{ a.constraints }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <a href="{{ url_for('editor_page', assignment_id=a.id) }}" class="btn btn-primary">
+                            <i class="fa-solid fa-code"></i> Solve in IDE
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Collapsible Test Cases & Common Errors Accordions -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed rgba(255, 255, 255, 0.1);">
+                    <!-- Required Test Cases to Pass -->
+                    <div style="background: rgba(15, 23, 42, 0.5); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="font-size: 0.825rem; color: var(--accent-emerald); display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="fa-solid fa-circle-check"></i> Required Test Cases (Public Benchmark)
+                            </strong>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">{{ a.public_test_cases_list|length }} Public Cases</span>
+                        </div>
+
+                        {% if a.public_test_cases_list %}
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 150px; overflow-y: auto;">
+                                {% for tc in a.public_test_cases_list %}
+                                    <div style="font-size: 0.78rem; background: rgba(30, 41, 59, 0.6); padding: 0.4rem 0.6rem; border-radius: 4px; border-left: 2px solid var(--accent-emerald);">
+                                        <div><strong style="color: var(--text-muted);">Input:</strong> <code>{{ tc.input }}</code></div>
+                                        <div><strong style="color: var(--text-muted);">Expected:</strong> <code style="color: var(--accent-emerald);">{{ tc.expected_output }}</code></div>
+                                        {% if tc.explanation %}
+                                            <div style="color: var(--text-secondary); font-size: 0.73rem; margin-top: 0.2rem;"><em>{{ tc.explanation }}</em></div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">Standard input/output test cases configured.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Common Errors & Pitfalls to Avoid -->
+                    <div style="background: rgba(15, 23, 42, 0.5); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="font-size: 0.825rem; color: var(--accent-amber); display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Common Errors & Pitfalls to Avoid
+                            </strong>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Edge Cases</span>
+                        </div>
+
+                        {% if a.common_errors_list %}
+                            <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.78rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.35rem;">
+                                {% for err in a.common_errors_list %}
+                                    <li>{{ err }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">Watch out for boundary conditions, empty inputs, and time limits.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No questions available yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Bottom Grid: My Submissions & Earned Certificates -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <!-- Submission History Table -->
+    <div class="glass-card">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> My Submission History</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">View all your evaluated runs and download official benchmark reports.</p>
+        
+        <div style="overflow-x: auto;">
+            <table class="tokens-table" style="font-family: var(--font-sans);">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Assignment</th>
+                        <th>Lang</th>
+                        <th>Score</th>
+                        <th>Exec Time</th>
+                        <th>AI Prob</th>
+                        <th>Submitted At</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in submissions %}
+                        <tr>
+                            <td>#{{ s.id }}</td>
+                            <td><strong>{{ s.assignment_title or 'Sandbox IDE' }}</strong></td>
+                            <td><span class="badge badge-medium">{{ s.language|upper }}</span></td>
+                            <td><span class="badge {% if s.score >= 80 %}badge-easy{% elif s.score >= 50 %}badge-medium{% else %}badge-hard{% endif %}">{{ s.score }}/100</span></td>
+                            <td>{{ s.execution_time }}s</td>
+                            <td>{{ s.ai_probability_score }}%</td>
+                            <td><small style="color: var(--text-muted);">{{ s.created_at }}</small></td>
+                            <td>
+                                <a href="{{ url_for('api_report_pdf', submission_id=s.id) }}" class="btn btn-secondary btn-sm" target="_blank">
+                                    <i class="fa-solid fa-file-pdf"></i> PDF Report
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No submissions recorded yet. Select any problem above to begin!</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Student Stats & Certificates -->
+    <div class="glass-card">
+        <h3><i class="fa-solid fa-certificate"></i> My Certificates</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Earned by solving mock questions from the Question Bank with 100% test cases passed.</p>
+        
+        {% for c in certificates %}
+            <div style="padding: 0.75rem 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="color: var(--accent-emerald);">{{ c.assignment_title }}</strong><br>
+                    <small style="color: var(--text-muted);">Code: {{ c.certificate_code }}</small>
+                </div>
+                <a href="{{ url_for('certificate_page', submission_id=c.submission_id) }}" class="btn btn-success btn-sm" target="_blank">View Cert</a>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 1.5rem 1rem; border: 1px dashed var(--border-color); border-radius: var(--radius-sm);">
+                <i class="fa-solid fa-award" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">No certificates earned yet.<br>Pass 100% of test cases on any Question Bank challenge to earn an official certificate!</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+.filter-chip {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.filter-chip:hover {
+    background: rgba(99, 102, 241, 0.2);
+    color: #f8fafc;
+    border-color: var(--primary);
+}
+.filter-chip.active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+    font-weight: 600;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+}
+</style>
+
+<script>
+let currentFilters = {
+    lang: 'all',
+    diff: 'all',
+    search: ''
+};
+
+function setFilter(type, val, el) {
+    currentFilters[type] = val;
+    // Update active class on sibling chips
+    const chips = el.parentElement.querySelectorAll('.filter-chip');
+    chips.forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    applyFilters();
+}
+
+function filterQuestions() {
+    currentFilters.search = (document.getElementById('question-search-input').value || '').trim().toLowerCase();
+    applyFilters();
+}
+
+function applyFilters() {
+    const cards = document.querySelectorAll('.question-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const cardLang = (card.dataset.lang || '').toLowerCase();
+        const cardDiff = card.dataset.diff || '';
+        const cardTitle = (card.dataset.title || '').toLowerCase();
+        const cardText = card.innerText.toLowerCase();
+
+        const matchLang = (currentFilters.lang === 'all' || cardLang === currentFilters.lang.toLowerCase());
+        const matchDiff = (currentFilters.diff === 'all' || cardDiff.toLowerCase() === currentFilters.diff.toLowerCase());
+        const matchSearch = (!currentFilters.search || cardTitle.includes(currentFilters.search) || cardText.includes(currentFilters.search));
+
+        if (matchLang && matchDiff && matchSearch) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const counter = document.getElementById('questions-counter');
+    if (counter) {
+        counter.textContent = `Showing ${visibleCount} of ${cards.length} questions.`;
+    }
+}
+</script>
+{% endblock %}
+

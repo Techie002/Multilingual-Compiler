@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Panel – CodeVision AI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h2><i class="fa-solid fa-user-gear"></i> System Administrator Control Panel</h2>
+    <p style="color: var(--text-secondary);">Manage global users, platform metrics, and compiler system state.</p>
+</div>
+
+<!-- Admin Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="glass-card">
+        <h4 style="color: var(--text-secondary);">Total Registered Users</h4>
+        <div style="font-size: 2.2rem; font-weight: 700; color: var(--primary); font-family: var(--font-mono); margin-top: 0.5rem;">
+            {{ stats.total_users }}
+        </div>
+    </div>
+    <div class="glass-card">
+        <h4 style="color: var(--text-secondary);">Total Assignments</h4>
+        <div style="font-size: 2.2rem; font-weight: 700; color: var(--accent-purple); font-family: var(--font-mono); margin-top: 0.5rem;">
+            {{ stats.total_assignments }}
+        </div>
+    </div>
+    <div class="glass-card">
+        <h4 style="color: var(--text-secondary);">Total Submissions</h4>
+        <div style="font-size: 2.2rem; font-weight: 700; color: var(--accent-emerald); font-family: var(--font-mono); margin-top: 0.5rem;">
+            {{ stats.total_submissions }}
+        </div>
+    </div>
+</div>
+
+<!-- User Management Table -->
+<div class="glass-card">
+    <h3><i class="fa-solid fa-users"></i> Platform Registered Users</h3>
+    <div style="overflow-x: auto; margin-top: 1rem;">
+        <table class="tokens-table" style="font-family: var(--font-sans);">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Registered At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>#{{ u.id }}</td>
+                        <td><strong>{{ u.username }}</strong></td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            <span class="badge {% if u.role == 'admin' %}badge-hard{% elif u.role == 'faculty' %}badge-medium{% else %}badge-easy{% endif %}">
+                                {{ u.role|upper }}
+                            </span>
+                        </td>
+                        <td>{{ u.created_at }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

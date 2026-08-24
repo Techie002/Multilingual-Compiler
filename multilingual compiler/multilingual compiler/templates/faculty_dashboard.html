@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Dashboard & Analytics – CodeVision AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h2><i class="fa-solid fa-chalkboard-user"></i> Faculty Dashboard & Analytics</h2>
+        <p style="color: var(--text-secondary);">Manage assignments, monitor student progress, run plagiarism scans, and export gradebooks.</p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+        <button class="btn btn-primary" onclick="openModal('create-assignment-modal')">
+            <i class="fa-solid fa-plus"></i> Create Assignment
+        </button>
+        <a href="{{ url_for('api_report_csv') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-file-csv"></i> Export Gradebook CSV
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="glass-card">
+        <h4 style="color: var(--text-secondary);">Total Students</h4>
+        <div style="font-size: 2.2rem; font-weight: 700; color: var(--primary); font-family: var(--font-mono); margin-top: 0.5rem;">
+            {{ students_count }}
+        </div>
+    </div>
+    <div class="glass-card">
+        <h4 style="color: var(--text-secondary);">Total Submissions</h4>
+        <div style="font-size: 2.2rem; font-weight: 700; color: var(--accent-emerald); font-family: var(--font-mono); margin-top: 0.5rem;">
+            {{ submissions|length }}
+        </div>
+    </div>
+    <div class="glass-card">
+        <h4 style="color: var(--text-secondary);">Assignments Created</h4>
+        <div style="font-size: 2.2rem; font-weight: 700; color: var(--accent-purple); font-family: var(--font-mono); margin-top: 0.5rem;">
+            {{ assignments|length }}
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Charts -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="glass-card">
+        <h3><i class="fa-solid fa-chart-pie"></i> Programming Language Distribution</h3>
+        <div style="max-height: 280px; margin-top: 1rem;">
+            <canvas id="language-pie-chart"></canvas>
+        </div>
+    </div>
+    <div class="glass-card">
+        <h3><i class="fa-solid fa-chart-bar"></i> Score Distribution Brackets</h3>
+        <div style="max-height: 280px; margin-top: 1rem;">
+            <canvas id="score-bar-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Student Submissions Review Table -->
+<div class="glass-card">
+    <h3><i class="fa-solid fa-receipt"></i> Student Submissions & Plagiarism Auditing</h3>
+    <div style="overflow-x: auto; margin-top: 1rem;">
+        <table class="tokens-table" style="font-family: var(--font-sans);">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Assignment</th>
+                    <th>Lang</th>
+                    <th>Score</th>
+                    <th>AI Prob</th>
+                    <th>Exec Time</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in submissions %}
+                    <tr>
+                        <td>#{{ s.id }}</td>
+                        <td><strong>{{ s.username }}</strong></td>
+                        <td>{{ s.assignment_title or 'Sandbox' }}</td>
+                        <td><span class="badge badge-medium">{{ s.language|upper }}</span></td>
+                        <td><span class="badge {% if s.score >= 80 %}badge-easy{% elif s.score >= 50 %}badge-medium{% else %}badge-hard{% endif %}">{{ s.score }}/100</span></td>
+                        <td>{{ s.ai_probability_score }}%</td>
+                        <td>{{ s.execution_time }}s</td>
+                        <td>{{ s.created_at }}</td>
+                        <td style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="runPlagiarismCheck({{ s.id }})">
+                                <i class="fa-solid fa-shield-halved"></i> Plagiarism Check
+                            </button>
+                            <a href="{{ url_for('api_report_pdf', submission_id=s.id) }}" class="btn btn-primary btn-sm" target="_blank">
+                                PDF
+                            </a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">No student submissions recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Assignment Modal -->
+<div id="create-assignment-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>Create New Assignment</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('create-assignment-modal')">&times;</button>
+        </div>
+
+        <form id="create-assignment-form" onsubmit="handleCreateAssignment(event)">
+            <div class="form-group">
+                <label class="form-label">Assignment Title</label>
+                <input type="text" id="asg-title" class="form-control" placeholder="e.g. Reverse Linked List" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description & Problem Statement</label>
+                <textarea id="asg-desc" class="form-control" rows="3" required></textarea>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Difficulty</label>
+                    <select id="asg-difficulty" class="form-control">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                        <option value="Expert">Expert</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Default Language</label>
+                    <select id="asg-lang" class="form-control">
+                        <option value="python">Python</option>
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="sql">SQL (SQLite)</option>
+                        <option value="rag">RAG Pipeline</option>
+                        <option value="php">PHP</option>
+                        <option value="go">Go</option>
+                        <option value="rust">Rust</option>
+                        <option value="bash">Bash / Shell</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Constraints</label>
+                    <input type="text" id="asg-constraints" class="form-control" placeholder="0 <= N <= 10^5">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Public Test Cases (JSON Array of {input, expected_output})</label>
+                <textarea id="asg-public-tc" class="form-control" rows="2">[{"input": "5", "expected_output": "120"}]</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hidden Test Cases (JSON Array of {input, expected_output})</label>
+                <textarea id="asg-hidden-tc" class="form-control" rows="2">[{"input": "7", "expected_output": "5040"}]</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Publish Assignment</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+async function handleCreateAssignment(e) {
+    e.preventDefault();
+    const title = document.getElementById('asg-title').value;
+    const description = document.getElementById('asg-desc').value;
+    const difficulty = document.getElementById('asg-difficulty').value;
+    const language = document.getElementById('asg-lang').value;
+    const constraints = document.getElementById('asg-constraints').value;
+    let public_test_cases = [], hidden_test_cases = [];
+
+    try {
+        public_test_cases = JSON.parse(document.getElementById('asg-public-tc').value);
+        hidden_test_cases = JSON.parse(document.getElementById('asg-hidden-tc').value);
+    } catch(err) {
+        showToast("Invalid JSON in test cases.", "danger");
+        return;
+    }
+
+    const res = await fetch('/api/assignments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, difficulty, language, constraints, public_test_cases, hidden_test_cases })
+    });
+    const data = await res.json();
+    if (data.success) {
+        showToast("Assignment published!", "success");
+        setTimeout(() => location.reload(), 1000);
+    } else {
+        showToast(data.message, "danger");
+    }
+}
+
+async function runPlagiarismCheck(subId) {
+    showToast("Running plagiarism audit across database...", "info");
+    const res = await fetch('/api/plagiarism', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submission_id: subId, code: "" })
+    });
+    const data = await res.json();
+    if (data.success) {
+        const details = data.data.details;
+        alert(`Plagiarism Audit Result:\nHighest Match: ${data.data.matched_user}\nOverall Similarity: ${details.overall_similarity}%\nToken Match: ${details.token_similarity}%\nAST Match: ${details.ast_similarity}%`);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Register – CodeVision AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 450px; margin: 2rem auto;">
+    <div class="glass-card">
+        <h2 style="text-align: center; margin-bottom: 0.5rem;"><i class="fa-solid fa-user-plus"></i> Create Account</h2>
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            Join CodeVision AI Multi-Language Platform
+        </p>
+
+        <form action="{{ url_for('register_page') }}" method="POST">
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" placeholder="e.g. maria_code" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" name="email" class="form-control" placeholder="maria@student.edu" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Account Role</label>
+                <select name="role" class="form-control">
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Create Account
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+            Already registered? <a href="{{ url_for('login_page') }}" style="color: var(--primary);">Sign in</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

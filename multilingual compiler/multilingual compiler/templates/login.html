@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Login – CodeVision AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 450px; margin: 3rem auto;">
+    <div class="glass-card">
+        <h2 style="text-align: center; margin-bottom: 0.5rem;"><i class="fa-solid fa-right-to-bracket"></i> Sign In</h2>
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            Access Student, Faculty, or Admin Dashboard
+        </p>
+
+        <form action="{{ url_for('login_page') }}" method="POST">
+            <div class="form-group">
+                <label class="form-label">Username or Email</label>
+                <input type="text" name="username" class="form-control" placeholder="e.g. alex_dev or alex@student.edu" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Sign In
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+            Don't have an account? <a href="{{ url_for('register_page') }}" style="color: var(--primary);">Register now</a>
+        </div>
+        
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted);">
+            <strong>Demo Accounts:</strong><br>
+            Student: <code>alex_dev</code> / <code>student123</code><br>
+            Faculty: <code>prof_smith</code> / <code>faculty123</code><br>
+            Admin: <code>admin</code> / <code>admin123</code>
+        </div>
+    </div>
+</div>
+{% endblock %}

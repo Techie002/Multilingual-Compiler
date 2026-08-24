@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Monaco-Style IDE Compiler – CodeVision AI{% endblock %}
+
+{% block content %}
+<input type="hidden" id="assignment-id" value="{{ assignment.id if assignment else '' }}">
+
+{% if assignment %}
+<!-- In-IDE Challenge Problem Banner -->
+<div class="problem-banner glass-card" id="challenge-banner">
+    <div class="problem-banner-header" onclick="toggleProblemDetails()">
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;"><i class="fa-solid fa-trophy"></i> Challenge #{{ assignment.id }}</span>
+            <h3 style="margin: 0; font-size: 1.15rem; color: #f8fafc;">{{ assignment.title }}</h3>
+            <span class="badge badge-{{ assignment.difficulty|lower }}">{{ assignment.difficulty }}</span>
+            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-weight: 700;">{{ assignment.language|upper }}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.8rem; color: var(--text-secondary);" id="problem-toggle-label">Details</span>
+            <i class="fa-solid fa-chevron-down" id="problem-toggle-icon" style="color: var(--text-muted); transition: transform 0.2s;"></i>
+        </div>
+    </div>
+    
+    <div class="problem-banner-body" id="problem-banner-details">
+        <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 0.6rem; line-height: 1.5;">
+            {{ assignment.description }}
+        </p>
+        {% if assignment.constraints %}
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+                <i class="fa-solid fa-ruler-combined"></i> <strong>Constraints:</strong> {{ assignment.constraints }}
+            </div>
+        {% endif %}
+
+        {% if assignment.public_test_cases_list %}
+            <div style="margin-top: 0.5rem;">
+                <strong style="font-size: 0.8rem; color: var(--accent-emerald); display: block; margin-bottom: 0.35rem;">
+                    <i class="fa-solid fa-circle-check"></i> Benchmark Test Cases (I/O):
+                </strong>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.5rem;">
+                    {% for tc in assignment.public_test_cases_list %}
+                        <div style="font-size: 0.78rem; background: rgba(15, 23, 42, 0.7); padding: 0.4rem 0.65rem; border-radius: 4px; border-left: 2px solid var(--accent-emerald);">
+                            <div><strong style="color: var(--text-muted);">Input:</strong> <code>{{ tc.input if tc.input else '(empty)' }}</code></div>
+                            <div><strong style="color: var(--text-muted);">Expected:</strong> <code style="color: var(--accent-emerald);">{{ tc.expected_output }}</code></div>
+                            {% if tc.explanation %}<div style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 0.15rem;"><em>{{ tc.explanation }}</em></div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- IDE Header Bar -->
+<div class="glass-card" style="padding: 0.6rem 1.25rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <h3 style="font-size: 1.1rem;"><i class="fa-solid fa-code"></i> CodeVision IDE</h3>
+        <select id="language-select" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+            <option value="python" {% if assignment and assignment.language == 'python' %}selected{% endif %}>Python 3</option>
+            <option value="c" {% if assignment and assignment.language == 'c' %}selected{% endif %}>C (GCC)</option>
+            <option value="cpp" {% if assignment and assignment.language == 'cpp' %}selected{% endif %}>C++ (G++)</option>
+            <option value="java" {% if assignment and assignment.language == 'java' %}selected{% endif %}>Java 17</option>
+            <option value="javascript" {% if assignment and assignment.language == 'javascript' %}selected{% endif %}>JavaScript (Node.js)</option>
+            <option value="sql" {% if assignment and assignment.language == 'sql' %}selected{% endif %}>SQL (SQLite Engine)</option>
+            <option value="rag" {% if assignment and assignment.language == 'rag' %}selected{% endif %}>RAG Pipeline (Semantic Search)</option>
+            <option value="php" {% if assignment and assignment.language == 'php' %}selected{% endif %}>PHP (CLI / Zend)</option>
+            <option value="go" {% if assignment and assignment.language == 'go' %}selected{% endif %}>Go (Golang)</option>
+            <option value="rust" {% if assignment and assignment.language == 'rust' %}selected{% endif %}>Rust (Cargo / rustc)</option>
+            <option value="bash" {% if assignment and assignment.language == 'bash' %}selected{% endif %}>Bash / Shell</option>
+        </select>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <button id="run-code-btn" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-play" style="color: var(--accent-emerald);"></i> Run Code
+        </button>
+
+        <button id="analyze-code-btn" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-microchip" style="color: var(--accent-cyan);"></i> Compiler Analysis
+        </button>
+
+        <button class="btn btn-secondary btn-sm" onclick="clearEditor()" title="Clear Editor Code">
+            <i class="fa-solid fa-trash-can" style="color: var(--accent-rose);"></i> Clear
+        </button>
+
+        <button class="btn btn-secondary btn-sm" onclick="openModal('ai-drawer-modal')">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-purple);"></i> AI Generator
+        </button>
+
+        <button id="ai-compare-btn" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-code-compare" style="color: var(--accent-amber);"></i> AI vs Student
+        </button>
+
+        {% if current_user %}
+            <button id="submit-code-btn" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-paper-plane"></i> Submit Solution
+            </button>
+        {% else %}
+            <a href="{{ url_for('login_page') }}" class="btn btn-primary btn-sm">Sign In to Submit</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Main Split Workspace -->
+<div class="editor-workspace">
+    <!-- Left: Code Editor (Empty by default for user to fill) -->
+    <div class="editor-panel glass-card" style="padding: 0;">
+        <div class="panel-header">
+            <span id="file-name-label"><i class="fa-regular fa-file-code"></i> solution.{% if assignment %}{{ assignment.language }}{% else %}py{% endif %}</span>
+            <span style="color: var(--text-muted); font-size: 0.8rem;">Auto-Indent & Syntax Active</span>
+        </div>
+        <div class="editor-container">
+<textarea id="code-editor" class="code-textarea" spellcheck="false" placeholder="Write your code solution here..."></textarea>
+        </div>
+    </div>
+
+    <!-- Right: Output & Compiler Concepts Tabs -->
+    <div class="output-panel glass-card" style="padding: 0;">
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="tab-console"><i class="fa-solid fa-terminal"></i> Console</button>
+            <button class="tab-btn" data-tab="tab-lexer"><i class="fa-solid fa-table-list"></i> Lexer (Tokens)</button>
+            <button class="tab-btn" data-tab="tab-ast"><i class="fa-solid fa-sitemap"></i> AST Tree</button>
+            <button class="tab-btn" data-tab="tab-semantics"><i class="fa-solid fa-triangle-exclamation"></i> Semantics</button>
+            <button class="tab-btn" data-tab="tab-optimization"><i class="fa-solid fa-gauge-high"></i> Optimizer</button>
+            <button class="tab-btn" data-tab="tab-hints"><i class="fa-solid fa-lightbulb"></i> Code Hints</button>
+        </div>
+
+        <!-- Tab 1: Terminal Console -->
+        <div id="tab-console" class="tab-content active">
+            <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <strong>Execution Telemetry & Output</strong>
+                <div id="metrics-display"></div>
+            </div>
+            <pre id="console-output" class="console-output">Click "Run Code" to compile and execute program output in isolated sandbox.</pre>
+            
+            <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                <label class="form-label" style="font-size: 0.8rem; display: flex; justify-content: space-between;">
+                    <span>Custom Standard Input (stdin)</span>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">Supports multi-line test inputs</span>
+                </label>
+                <textarea id="custom-input" class="custom-stdin-textarea" placeholder="Optional stdin input (single or multi-line for arrays, matrices, test cases)..."></textarea>
+            </div>
+        </div>
+
+        <!-- Tab 2: Lexical Analysis -->
+        <div id="tab-lexer" class="tab-content">
+            <h4>Lexical Analysis (Tokens)</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Generated token stream with line & column numbers.</p>
+            <div id="tokens-container">Run Compiler Analysis to generate tokens stream.</div>
+        </div>
+
+        <!-- Tab 3: AST & Parse Tree -->
+        <div id="tab-ast" class="tab-content">
+            <h4>Abstract Syntax Tree (AST) & Parse Tree</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Hierarchical syntax tree and concrete parse derivation.</p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h5 style="color: var(--accent-cyan);"><i class="fa-solid fa-sitemap"></i> Abstract Syntax Tree (AST)</h5>
+                <div id="ast-container" style="margin-top: 0.5rem;">Run Compiler Analysis to construct AST visualization tree.</div>
+            </div>
+            
+            <div>
+                <h5 style="color: var(--accent-purple);"><i class="fa-solid fa-tree"></i> Concrete Parse Tree Stream</h5>
+                <div id="parsetree-container" style="margin-top: 0.5rem;">Run Compiler Analysis to view parse tree.</div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Syntax & Semantic Checks -->
+        <div id="tab-semantics" class="tab-content">
+            <h4>Syntax & Semantic Analyzer</h4>
+            <div style="margin-bottom: 1rem;">
+                <h5>Syntax Error Diagnostic</h5>
+                <div id="syntax-container" style="margin-top: 0.4rem;">No errors.</div>
+            </div>
+            <div>
+                <h5>Semantic Rules & Identifier Checks</h5>
+                <div id="semantics-container" style="margin-top: 0.4rem;">No semantic violations.</div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Optimization Analyzer -->
+        <div id="tab-optimization" class="tab-content">
+            <h4>Code Optimization & Performance Score</h4>
+            <div id="optimization-container" style="margin-top: 1rem;">Run Compiler Analysis to analyze code efficiency.</div>
+        </div>
+
+        <!-- Tab 6: Algorithmic Hints & Code Diagnostics (Non-AI) -->
+        <div id="tab-hints" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <div>
+                    <h4 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-lightbulb" style="color: var(--accent-amber);"></i>
+                        Algorithmic Hints & Code Diagnostics
+                    </h4>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.25rem 0 0 0;">
+                        Rule-based problem guidance and live static code diagnostics without AI.
+                    </p>
+                </div>
+                <button id="fetch-hints-btn" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-rotate"></i> Refresh Hints
+                </button>
+            </div>
+
+            <!-- Error Guidance Alert (Appears on Runtime/Compiler Exceptions) -->
+            <div id="error-guidance-container" style="display: none;"></div>
+
+            <!-- Problem Algorithmic Hints (Progressive Disclosure) -->
+            <div style="margin-bottom: 1.25rem;">
+                <h5 style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-signs-post"></i> Problem Algorithmic Guidance
+                </h5>
+                <div id="problem-hints-container">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Loading problem hints...</p>
+                </div>
+            </div>
+
+            <!-- Live Code & AST Diagnostics -->
+            <div>
+                <h5 style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-stethoscope"></i> Static Code Diagnostics
+                </h5>
+                <div id="code-diagnostics-container">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Analyzing code structure...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Code Generator Modal Drawer -->
+<div id="ai-drawer-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-purple);"></i> AI Code Generator</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('ai-drawer-modal')">&times;</button>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Problem Statement</label>
+            <input type="text" id="ai-problem-input" class="form-control" placeholder="e.g. Write a function to reverse a binary tree" value="{{ assignment.title if assignment else 'Factorial of a number' }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Difficulty</label>
+            <select id="ai-difficulty-select" class="form-control">
+                <option value="Easy">Easy</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Hard">Hard</option>
+                <option value="Expert">Expert</option>
+            </select>
+        </div>
+        <button id="ai-generate-btn" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">Generate AI Solution</button>
+        
+        <div id="ai-generated-display" class="glass-card" style="background: rgba(15,23,42,0.9);">
+            <p style="color: var(--text-muted);">AI solution will appear here once generated.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Student vs AI Comparison Modal -->
+<div id="comparison-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3><i class="fa-solid fa-code-compare"></i> Student Code VS AI Solution</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('comparison-modal')">&times;</button>
+        </div>
+        <div id="comparison-modal-content"></div>
+    </div>
+</div>
+
+<!-- Submission Result & Evaluation Modal -->
+<div id="submission-result-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 650px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-circle-check" style="color: var(--accent-emerald);"></i>
+                Submission Evaluated
+            </h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('submission-result-modal')">&times;</button>
+        </div>
+
+        <div id="submission-result-content">
+            <!-- Dynamically populated by compiler.js -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/compiler.js') }}"></script>
+<script src="{{ url_for('static', filename='js/hints.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ai.js') }}"></script>
+{% endblock %}

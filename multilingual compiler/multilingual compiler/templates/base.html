@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CodeVision AI – Multi-Language Compiler & Evaluation Platform{% endblock %}</title>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="{{ url_for('index_page') }}" class="nav-brand">
+            <div class="brand-icon">CV</div>
+            <span>CodeVision <span style="color: var(--primary);">AI</span></span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="{{ url_for('index_page') }}">Home</a></li>
+            <li><a href="{{ url_for('editor_page') }}">IDE Compiler</a></li>
+            <li><a href="{{ url_for('leaderboard_page') }}">Leaderboard</a></li>
+            
+            {% if current_user %}
+                <li><a href="{{ url_for('dashboard_router') }}">Dashboard ({{ current_user.role|capitalize }})</a></li>
+                <li><a href="{{ url_for('logout_action') }}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login_page') }}">Login</a></li>
+                <li><a href="{{ url_for('register_page') }}" class="btn btn-primary btn-sm">Register</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div style="margin-bottom: 1.5rem;">
+                    {% for category, message in messages %}
+                        <div class="glass-card" style="border-left: 4px solid {% if category=='success' %}#10b981{% elif category=='danger' %}#f43f5e{% else %}#6366f1{% endif %}; margin-bottom: 0.5rem; padding: 0.75rem 1rem;">
+                            <strong>{{ category|upper }}:</strong> {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 CodeVision AI Platform – Multi-Language Compiler & Evaluation Engine. Built for Hackathons & Education.</p>
+    </footer>
+
+    <!-- Core Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
